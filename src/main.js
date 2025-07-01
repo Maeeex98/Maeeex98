@@ -17,65 +17,99 @@ class WorldMap3D {
   }
 
   async init() {
-    // Создание сцены
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0a0a);
+    try {
+      // Создание сцены
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x0a0a0a);
 
-    // Создание камеры
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    this.camera.position.z = 300;
+      // Создание камеры
+      this.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      this.camera.position.z = 300;
 
-    // Создание рендерера
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // Создание рендерера
+      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    const container = document.getElementById('globe-container');
-    container.appendChild(this.renderer.domElement);
+      const container = document.getElementById('globe-container');
+      if (container) {
+        container.appendChild(this.renderer.domElement);
+      }
 
-    // Создание глобуса
-    await this.createGlobe();
+      // Создание глобуса
+      await this.createGlobe();
 
-    // Добавление освещения
-    this.addLighting();
+      // Добавление освещения
+      this.addLighting();
 
-    // Добавление звезд
-    this.addStars();
+      // Добавление звезд
+      this.addStars();
 
-    // Настройка управления
-    this.setupControls();
+      // Настройка управления
+      this.setupControls();
 
-    // Скрытие загрузки
-    document.getElementById('loading').style.display = 'none';
+      // Скрытие загрузки
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.display = 'none';
+      }
 
-    // Запуск анимации
-    this.animate();
+      // Запуск анимации
+      this.animate();
+    } catch (error) {
+      console.error('Ошибка инициализации 3D карты:', error);
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.innerHTML = '<p>Ошибка загрузки 3D карты</p>';
+      }
+    }
   }
 
   async createGlobe() {
-    this.globe = new ThreeGlobe()
-      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-      .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png');
+    try {
+      this.globe = new ThreeGlobe()
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png');
 
-    // Настройка материала глобуса
-    this.globe.globeMaterial().shininess = 0.8;
-    this.globe.globeMaterial().transparent = true;
-    this.globe.globeMaterial().opacity = 0.9;
+      // Настройка материала глобуса
+      if (this.globe.globeMaterial) {
+        this.globe.globeMaterial().shininess = 0.8;
+        this.globe.globeMaterial().transparent = true;
+        this.globe.globeMaterial().opacity = 0.9;
+      }
 
+      this.scene.add(this.globe);
+
+      // Добавление случайных точек на глобусе
+      this.addRandomPoints();
+    } catch (error) {
+      console.error('Ошибка создания глобуса:', error);
+      // Создаем простую сферу как fallback
+      this.createFallbackGlobe();
+    }
+  }
+
+  createFallbackGlobe() {
+    const geometry = new THREE.SphereGeometry(100, 32, 32);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x4a90e2,
+      shininess: 100
+    });
+    this.globe = new THREE.Mesh(geometry, material);
     this.scene.add(this.globe);
-
-    // Добавление случайных точек на глобусе
-    this.addRandomPoints();
   }
 
   addRandomPoints() {
+    if (!this.globe || !this.globe.pointsData) {
+      return;
+    }
+
     const pointsData = [];
     for (let i = 0; i < 100; i++) {
       pointsData.push({
@@ -86,11 +120,15 @@ class WorldMap3D {
       });
     }
 
-    this.globe
-      .pointsData(pointsData)
-      .pointAltitude('size')
-      .pointColor('color')
-      .pointRadius(0.5);
+    try {
+      this.globe
+        .pointsData(pointsData)
+        .pointAltitude('size')
+        .pointColor('color')
+        .pointRadius(0.5);
+    } catch (error) {
+      console.error('Ошибка добавления точек:', error);
+    }
   }
 
   addLighting() {
@@ -133,6 +171,10 @@ class WorldMap3D {
   }
 
   setupControls() {
+    if (!this.renderer || !this.renderer.domElement) {
+      return;
+    }
+
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
@@ -142,7 +184,7 @@ class WorldMap3D {
     });
 
     this.renderer.domElement.addEventListener('mousemove', (e) => {
-      if (isDragging) {
+      if (isDragging && this.globe) {
         const deltaMove = {
           x: e.clientX - previousMousePosition.x,
           y: e.clientY - previousMousePosition.y
@@ -168,27 +210,40 @@ class WorldMap3D {
 
   setupEventListeners() {
     // Управление скоростью вращения
-    document.getElementById('rotationSpeed').addEventListener('input', (e) => {
-      this.rotationSpeed = parseFloat(e.target.value);
-    });
+    const rotationSpeedControl = document.getElementById('rotationSpeed');
+    if (rotationSpeedControl) {
+      rotationSpeedControl.addEventListener('input', (e) => {
+        this.rotationSpeed = parseFloat(e.target.value);
+      });
+    }
 
     // Управление высотой камеры
-    document.getElementById('altitude').addEventListener('input', (e) => {
-      const altitude = parseFloat(e.target.value);
-      this.camera.position.setLength(altitude * 100);
-    });
+    const altitudeControl = document.getElementById('altitude');
+    if (altitudeControl) {
+      altitudeControl.addEventListener('input', (e) => {
+        const altitude = parseFloat(e.target.value);
+        this.camera.position.setLength(altitude * 100);
+      });
+    }
 
     // Сброс вида
-    document.getElementById('resetView').addEventListener('click', () => {
-      this.camera.position.set(0, 0, 300);
-      this.globe.rotation.set(0, 0, 0);
-    });
+    const resetViewBtn = document.getElementById('resetView');
+    if (resetViewBtn) {
+      resetViewBtn.addEventListener('click', () => {
+        this.camera.position.set(0, 0, 300);
+        if (this.globe) {
+          this.globe.rotation.set(0, 0, 0);
+        }
+      });
+    }
 
     // Обработка изменения размера окна
     window.addEventListener('resize', () => {
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      if (this.camera && this.renderer) {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+      }
     });
   }
 
@@ -200,7 +255,9 @@ class WorldMap3D {
       this.globe.rotation.y += this.rotationSpeed;
     }
 
-    this.renderer.render(this.scene, this.camera);
+    if (this.renderer && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
   destroy() {
@@ -226,6 +283,11 @@ class SupportSystem {
     const closeModal = document.getElementById('closeModal');
     const closeResponseModal = document.getElementById('closeResponseModal');
     const supportForm = document.getElementById('supportForm');
+
+    if (!supportBtn || !supportModal || !responseModal || !closeModal || !closeResponseModal || !supportForm) {
+      console.error('Не найдены необходимые элементы для системы поддержки');
+      return;
+    }
 
     // Открытие модального окна поддержки
     supportBtn.addEventListener('click', () => {
@@ -267,8 +329,10 @@ class SupportSystem {
     const btnText = submitBtn.querySelector('.btn-text');
     const btnLoading = submitBtn.querySelector('.btn-loading');
     
-    btnText.style.display = 'none';
-    btnLoading.style.display = 'inline';
+    if (btnText && btnLoading) {
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+    }
     submitBtn.disabled = true;
 
     try {
@@ -279,17 +343,23 @@ class SupportSystem {
       this.showResponse(data);
       
       // Закрыть форму поддержки
-      document.getElementById('supportModal').style.display = 'none';
+      const supportModal = document.getElementById('supportModal');
+      if (supportModal) {
+        supportModal.style.display = 'none';
+      }
       
       // Сбросить форму
       form.reset();
       
     } catch (error) {
+      console.error('Ошибка при отправке:', error);
       alert('Ошибка при отправке сообщения. Попробуйте еще раз.');
     } finally {
       // Восстановить кнопку
-      btnText.style.display = 'inline';
-      btnLoading.style.display = 'none';
+      if (btnText && btnLoading) {
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+      }
       submitBtn.disabled = false;
     }
   }
@@ -319,6 +389,11 @@ class SupportSystem {
     const responseTime = document.getElementById('responseTime');
     const ticketNumber = document.getElementById('ticketNumber');
 
+    if (!responseModal || !responseTime || !ticketNumber) {
+      console.error('Не найдены элементы для отображения ответа');
+      return;
+    }
+
     // Установить данные ответа
     responseTime.textContent = new Date().toLocaleString('ru-RU');
     ticketNumber.textContent = this.generateTicketNumber();
@@ -334,11 +409,15 @@ class SupportSystem {
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
-  const worldMap = new WorldMap3D();
-  const supportSystem = new SupportSystem();
+  try {
+    const worldMap = new WorldMap3D();
+    const supportSystem = new SupportSystem();
 
-  // Обработка выгрузки страницы
-  window.addEventListener('beforeunload', () => {
-    worldMap.destroy();
-  });
+    // Обработка выгрузки страницы
+    window.addEventListener('beforeunload', () => {
+      worldMap.destroy();
+    });
+  } catch (error) {
+    console.error('Ошибка инициализации приложения:', error);
+  }
 });
