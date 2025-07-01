@@ -1,0 +1,18 @@
+{
+  "name": "3d-world-map-site",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 7465",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "three-globe": "^2.30.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.8"
+  }
+}

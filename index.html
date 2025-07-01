@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Карта Мира - Maeeex98</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="container">
+          <div class="logo">
+            <h1>🌍 3D World Map</h1>
+            <span>by Maeeex98</span>
+          </div>
+          <nav class="nav">
+            <button id="supportBtn" class="support-btn">
+              📧 Поддержка
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main">
+        <div id="globe-container" class="globe-container">
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Загрузка 3D карты мира...</p>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+          <div class="control-panel">
+            <h3>Управление</h3>
+            <div class="control-group">
+              <label>Скорость вращения:</label>
+              <input type="range" id="rotationSpeed" min="0" max="0.02" step="0.001" value="0.005">
+            </div>
+            <div class="control-group">
+              <label>Высота:</label>
+              <input type="range" id="altitude" min="1.5" max="5" step="0.1" value="2.5">
+            </div>
+            <button id="resetView" class="reset-btn">Сбросить вид</button>
+          </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+          <h3>О проекте</h3>
+          <p>Интерактивная 3D карта мира, созданная с использованием Three.js</p>
+          <ul>
+            <li>🖱️ Перетаскивайте для поворота</li>
+            <li>🔍 Колесо мыши для масштабирования</li>
+            <li>⚙️ Используйте панель управления</li>
+          </ul>
+        </div>
+      </main>
+
+      <!-- Support Modal -->
+      <div id="supportModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>📧 Техническая поддержка</h2>
+            <button class="close-btn" id="closeModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="supportForm" class="support-form">
+              <div class="form-group">
+                <label for="userName">Ваше имя:</label>
+                <input type="text" id="userName" name="userName" required>
+              </div>
+              <div class="form-group">
+                <label for="userEmail">Ваш email:</label>
+                <input type="email" id="userEmail" name="userEmail" required>
+              </div>
+              <div class="form-group">
+                <label for="subject">Тема обращения:</label>
+                <select id="subject" name="subject" required>
+                  <option value="">Выберите тему</option>
+                  <option value="bug">Сообщить об ошибке</option>
+                  <option value="feature">Предложить функцию</option>
+                  <option value="question">Задать вопрос</option>
+                  <option value="other">Другое</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="message">Сообщение:</label>
+                <textarea id="message" name="message" rows="5" required placeholder="Опишите вашу проблему или вопрос..."></textarea>
+              </div>
+              <button type="submit" class="submit-btn">
+                <span class="btn-text">Отправить сообщение</span>
+                <span class="btn-loading" style="display: none;">Отправка...</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Response Modal -->
+      <div id="responseModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>✅ Ответ получен</h2>
+            <button class="close-btn" id="closeResponseModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="response-content">
+              <p><strong>Статус:</strong> <span class="status-success">Сообщение доставлено</span></p>
+              <p><strong>Время отправки:</strong> <span id="responseTime"></span></p>
+              <div class="response-message">
+                <h4>Автоматический ответ от поддержки:</h4>
+                <div class="auto-response">
+                  <p>Здравствуйте! Спасибо за ваше обращение.</p>
+                  <p>Мы получили ваше сообщение и обработаем его в ближайшее время. Обычно мы отвечаем в течение 24 часов.</p>
+                  <p>Если у вас срочный вопрос, пожалуйста, укажите это в теме письма.</p>
+                  <p><strong>Номер обращения:</strong> <span id="ticketNumber"></span></p>
+                  <hr>
+                  <p><em>С уважением,<br>Команда поддержки Maeeex98</em></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
