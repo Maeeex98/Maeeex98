@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.165.0",
+    "three": "^0.160.0",
     "three-globe": "^2.30.0"
   },
   "devDependencies": {
